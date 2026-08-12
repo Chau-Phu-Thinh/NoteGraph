@@ -32,3 +32,9 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+.agents
+.codex
+node_modules/
+.expo/
+.DS_Store
