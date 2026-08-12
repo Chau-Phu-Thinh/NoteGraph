@@ -39,6 +39,7 @@ export default function NoteEditorScreen({ route, navigation }: Props) {
     deleteNote,
     tags: availableTags,
     createTag,
+    deleteTag,
     getNotesByTitle,
     createNoteLink,
     notes: allNotes,
@@ -377,6 +378,29 @@ export default function NoteEditorScreen({ route, navigation }: Props) {
     setIsDirty(true);
   };
 
+  const handleDeleteTagPrompt = (tag: Tag) => {
+    Alert.alert(
+      'Delete Tag',
+      `Are you sure you want to delete the tag "${tag.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteTag(tag.id);
+              setSelectedTags((prev) => prev.filter((t) => t.id !== tag.id));
+              setIsDirty(true);
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to delete tag.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleCreateNewTag = async () => {
     const trimmed = tagSearchQuery.trim();
     if (!trimmed) return;
@@ -619,6 +643,7 @@ export default function NoteEditorScreen({ route, navigation }: Props) {
         animationType="slide"
         transparent
         onRequestClose={() => setTagModalVisible(false)}
+        statusBarTranslucent
       >
         <View style={styles.modalBackdrop}>
           <View style={styles.modalContent}>
@@ -654,17 +679,25 @@ export default function NoteEditorScreen({ route, navigation }: Props) {
               renderItem={({ item }) => {
                 const isSelected = selectedTags.some((t) => t.id === item.id);
                 return (
-                  <TouchableOpacity
-                    style={styles.modalTagItem}
-                    onPress={() => handleToggleTag(item)}
-                  >
-                    <MaterialCommunityIcons
-                      name={isSelected ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                      size={22}
-                      color={isSelected ? Colors.primary : Colors.iconInactive}
-                    />
-                    <Text style={styles.modalTagText}>#{item.name}</Text>
-                  </TouchableOpacity>
+                  <View style={styles.modalTagItem}>
+                    <TouchableOpacity
+                      style={styles.modalTagItemLeft}
+                      onPress={() => handleToggleTag(item)}
+                    >
+                      <MaterialCommunityIcons
+                        name={isSelected ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                        size={22}
+                        color={isSelected ? Colors.primary : Colors.iconInactive}
+                      />
+                      <Text style={styles.modalTagText}>#{item.name}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.deleteTagButton}
+                      onPress={() => handleDeleteTagPrompt(item)}
+                    >
+                      <MaterialCommunityIcons name="close" size={20} color={Colors.error} />
+                    </TouchableOpacity>
+                  </View>
                 );
               }}
               ListEmptyComponent={
@@ -906,9 +939,18 @@ const styles = StyleSheet.create({
   modalTagItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: Colors.chipDefaultBg,
+  },
+  modalTagItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  deleteTagButton: {
+    padding: 4,
   },
   modalTagText: {
     fontSize: 14,

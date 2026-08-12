@@ -12,9 +12,24 @@
     "android": {
       "package": "com.notegraph.app"
     },
+    "androidStatusBar": {
+      "hidden": true
+    },
     "plugins": [
       "expo-sqlite",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "49dbec38-fff8-4f85-ad36-e4eb1af6ed24"
+      }
+    },
+    "owner": "zoldycks",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/49dbec38-fff8-4f85-ad36-e4eb1af6ed24"
+    }
   }
 }

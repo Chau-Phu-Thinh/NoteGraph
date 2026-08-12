@@ -8,14 +8,14 @@ import { AppProvider } from './src/context/AppContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { Colors } from './src/theme/tokens';
 
+import { Suspense } from 'react';
+
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
     async function loadFonts() {
       try {
-        // Attempting to load Audela if provided, otherwise fallback to system font.
-        // We will just wait a short tick to simulate loading if no font assets are provided yet.
         await new Promise(resolve => setTimeout(resolve, 100));
       } catch (e) {
         console.warn('Error loading fonts', e);
@@ -35,12 +35,18 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <AppProvider>
-        <StatusBar hidden={true} barStyle="dark-content" backgroundColor={Colors.background} />
-        <AppNavigator />
-      </AppProvider>
-    </SafeAreaProvider>
+    <Suspense fallback={
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    }>
+      <SafeAreaProvider>
+        <AppProvider>
+          <StatusBar hidden={true} barStyle="dark-content" backgroundColor={Colors.background} />
+          <AppNavigator />
+        </AppProvider>
+      </SafeAreaProvider>
+    </Suspense>
   );
 }
 
