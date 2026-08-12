@@ -1,34 +1,41 @@
 # NoteGraph
 
-## Cách chạy project
+## Prerequisites
 
-### 1. Clone code từ GitHub về máy
+- Node.js installed on your computer
+- Expo Go installed on your Android phone
+
+## How to Run
+
+### 1. Clone Repo
 
 ```bash
-git clone <link-repo-github>
+git clone https://github.com/<your-username>/<your-repo>.git
 cd NoteGraph
 ```
 
-### 2. Cài dependencies
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Chạy Expo
+### 3. Start Expo
 
 ```bash
 npx expo start
 ```
 
-### 4. Mở trên Android bằng Expo Go
+You can also use `npm start`, which runs the same command.
 
-1. Cài app `Expo Go` trên điện thoại Android từ Google Play.
-2. Bật máy tính và điện thoại cùng một mạng Wi-Fi.
-3. Sau khi chạy `npx expo start`, Expo sẽ hiện QR code.
-4. Mở `Expo Go` trên Android và quét QR code đó để mở app.
+### 4. Open on Android with Expo Go
 
-## Lưu ý
+1. Install `Expo Go` on your Android phone from Google Play.
+2. Make sure your computer and phone are on the same Wi-Fi network.
+3. After running `npx expo start`, Expo will show a QR code.
+4. Open `Expo Go` on Android and scan the QR code to launch the app.
 
-- Dự án này tập trung chạy trên Android bằng `Expo Go`.
-- Thư mục deploy web đã được xóa vì phần web đang lỗi nhiều và không còn dùng nữa.
+## Notes
+
+- This project is focused on running on Android with `Expo Go`.
+- The web deploy folder was removed because the web version had too many issues and is no longer used.
