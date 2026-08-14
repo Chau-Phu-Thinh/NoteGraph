@@ -185,10 +185,77 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deletes: string[],
     toggles: string[]
   ) => {
+    // 1. Snapshot tasks before DB change
+    const deletedTasks = deletes.map(id => tasks.find(t => t.id === id)).filter(Boolean);
+    const toggledTasksBefore = toggles.map(id => tasks.find(t => t.id === id)).filter(Boolean);
+    const updatedTasksBefore = updates.map(u => ({ newTitle: u.title, oldTask: tasks.find(t => t.id === u.id) })).filter(x => x.oldTask);
+
+    // 2. Save changes to task DB
     await taskRepo.batchSaveTasks(creates, updates, deletes, toggles);
     setPendingTaskChanges(false);
+
+    // 3. Sync changes back to notes contents
+    try {
+      const allNotes = await noteRepo.getAllNotes();
+      
+      const escapeRegExp = (string: string) => {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      };
+
+      let notesChanged = false;
+
+      for (const note of allNotes) {
+        let newContent = note.content;
+        let modified = false;
+
+        // Sync Toggles: flip the checkbox in the note
+        for (const t of toggledTasksBefore) {
+          if (!t) continue;
+          const willBeCompleted = !t.is_completed;
+          const targetRegex = new RegExp(`^- \\[(x|X| )?\\]\\s*${escapeRegExp(t.title)}\\s*$`, 'gm');
+          if (targetRegex.test(newContent)) {
+            newContent = newContent.replace(targetRegex, `- [${willBeCompleted ? 'x' : ' '}] ${t.title}`);
+            modified = true;
+          }
+        }
+
+        // Sync Updates (Renames)
+        for (const u of updatedTasksBefore) {
+          if (!u.oldTask) continue;
+          const targetRegex = new RegExp(`^- \\[(x|X| )?\\]\\s*${escapeRegExp(u.oldTask.title)}\\s*$`, 'gm');
+          if (targetRegex.test(newContent)) {
+            newContent = newContent.replace(targetRegex, (match, p1) => {
+              return `- [${p1 || ' '}] ${u.newTitle}`;
+            });
+            modified = true;
+          }
+        }
+
+        // Sync Deletes: completely remove the task line from note
+        for (const d of deletedTasks) {
+          if (!d) continue;
+          const targetRegex = new RegExp(`^- \\[(x|X| )?\\]\\s*${escapeRegExp(d.title)}\\s*(\\r?\\n)?`, 'gm');
+          if (targetRegex.test(newContent)) {
+            newContent = newContent.replace(targetRegex, '');
+            modified = true;
+          }
+        }
+
+        if (modified) {
+          await noteRepo.updateNote(note.id, note.title, newContent, note.tags?.map(t => t.id));
+          notesChanged = true;
+        }
+      }
+
+      if (notesChanged) {
+        await refreshNotes();
+      }
+    } catch (e) {
+      console.error('Failed to sync notes with task changes', e);
+    }
+
     await refreshTasks();
-  }, [refreshTasks]);
+  }, [tasks, refreshTasks, refreshNotes]);
 
   const value: AppState = {
     notes,
