@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -19,6 +20,7 @@ import { SharedValue } from 'react-native-reanimated';
 import Header from '../components/Header';
 import TaskItem from '../components/TaskItem';
 import EmptyState from '../components/EmptyState';
+import FAB from '../components/FAB';
 import { useApp } from '../context/AppContext';
 import { Colors, Spacing, Radius, Typography, Shadows } from '../theme/tokens';
 import { generateId } from '../utils/helpers';
@@ -37,6 +39,7 @@ export default function TaskScreen({ navigation }: any) {
   } = useApp();
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [isAddingTask, setIsAddingTask] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Prompt on back navigation if there are unsaved changes
@@ -125,6 +128,7 @@ export default function TaskScreen({ navigation }: any) {
     setLocalTasks((prev) => [newTask, ...prev]);
     setPendingTaskChanges(true);
     setNewTaskTitle('');
+    setIsAddingTask(false);
   };
 
   const handleSave = async () => {
@@ -286,29 +290,53 @@ export default function TaskScreen({ navigation }: any) {
           </ScrollView>
         )}
 
-        <View style={styles.inputWrapper}>
-          <View style={styles.addInputContainer}>
-            <MaterialCommunityIcons name="plus" size={22} color={Colors.primary} />
-            <TextInput
-              style={styles.input}
-              value={newTaskTitle}
-              onChangeText={setNewTaskTitle}
-              placeholder="Add a new task..."
-              placeholderTextColor={Colors.textSecondary}
-              onSubmitEditing={handleAddTask}
-              returnKeyType="done"
+        {/* Replace inline input with FAB */}
+        <FAB onPress={() => setIsAddingTask(true)} />
+
+        {/* Modal for Adding Task */}
+        <Modal
+          visible={isAddingTask}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setIsAddingTask(false)}
+        >
+          <KeyboardAvoidingView 
+            style={styles.modalOverlay} 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <TouchableOpacity 
+              style={styles.modalDismissArea} 
+              activeOpacity={1} 
+              onPress={() => setIsAddingTask(false)} 
             />
-            {newTaskTitle.trim().length > 0 && (
-              <TouchableOpacity
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Add New Task</Text>
+                <TouchableOpacity onPress={() => setIsAddingTask(false)}>
+                  <MaterialCommunityIcons name="close" size={24} color={Colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={styles.modalInput}
+                value={newTaskTitle}
+                onChangeText={setNewTaskTitle}
+                placeholder="Task title..."
+                placeholderTextColor={Colors.textSecondary}
+                autoFocus
+                onSubmitEditing={handleAddTask}
+                returnKeyType="done"
+              />
+              <TouchableOpacity 
+                style={[styles.modalAddButton, !newTaskTitle.trim() && styles.modalAddButtonDisabled]} 
                 onPress={handleAddTask}
-                style={styles.addButton}
-                activeOpacity={0.8}
+                disabled={!newTaskTitle.trim()}
               >
-                <MaterialCommunityIcons name="arrow-up" size={18} color="#FFFFFF" />
+                <Text style={styles.modalAddButtonText}>Add Task</Text>
               </TouchableOpacity>
-            )}
-          </View>
-        </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+
       </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -373,36 +401,53 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  inputWrapper: {
-    paddingHorizontal: Spacing.screenPadding,
-    paddingVertical: Spacing.md,
-    backgroundColor: Colors.background,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
   },
-  addInputContainer: {
+  modalDismissArea: {
+    flex: 1,
+  },
+  modalContent: {
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    padding: Spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? 40 : Spacing.lg,
+    ...Shadows.modal,
+  },
+  modalHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  modalTitle: {
+    ...Typography.sectionHeading,
+    color: Colors.textPrimary,
+  },
+  modalInput: {
     backgroundColor: Colors.surface,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
     borderWidth: 1,
     borderColor: Colors.border,
-    ...Shadows.card,
-  },
-  input: {
-    flex: 1,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
     ...Typography.body,
     color: Colors.textPrimary,
-    marginLeft: Spacing.sm,
-    paddingVertical: Platform.OS === 'ios' ? Spacing.sm : Spacing.xs,
+    marginBottom: Spacing.md,
   },
-  addButton: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.full,
+  modalAddButton: {
     backgroundColor: Colors.primary,
-    justifyContent: 'center',
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
     alignItems: 'center',
-    marginLeft: Spacing.sm,
+  },
+  modalAddButtonDisabled: {
+    backgroundColor: Colors.border,
+  },
+  modalAddButtonText: {
+    color: '#FFFFFF',
+    ...Typography.sectionHeading,
   },
 });

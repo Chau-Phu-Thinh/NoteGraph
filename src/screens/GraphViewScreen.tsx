@@ -258,7 +258,7 @@ export default function GraphViewScreen({ navigation }: Props) {
   // Gesture handling for pan & zoom
   const pinchGesture = Gesture.Pinch()
     .onUpdate((e) => {
-      scale.value = Math.max(0.4, Math.min(savedScale.value * e.scale, 3.5));
+      scale.value = Math.max(0.1, Math.min(savedScale.value * e.scale, 5.0));
     })
     .onEnd(() => {
       savedScale.value = scale.value;
